@@ -2,10 +2,13 @@
    
 %{
    
-   int pos = 1;    
+ int line = 1;   
+ int pos = 1;    
    /* write your C code here for definitions of variables and including headers */
 %}
-
+  DIGIT [0-9] 
+  ALPHA [A-Za-z] 
+  UNDER [_] 
 
    /* some common rules */
 
@@ -17,6 +20,7 @@
    "*" {printf("MULT\n"), pos += yyleng;}
    "+" {printf("ADD\n"), pos += yyleng;} 
    "-" {printf("SUB\n"), pos += yyleng;}
+   "%" {printf("MOD\n"), pos += yyleng;} 
 
    function {printf("FUNCTION\n"), pos += yyleng;} 
    beginparams {printf("BEGIN_PARAMS\n"), pos += yyleng;} 
@@ -52,10 +56,20 @@
    ">" {printf("GT\n"), pos += yyleng;} 
    "<=" {printf("LTE\n"), pos += yyleng;}
    ">=" {printf("GTE\n"), pos += yyleng;}
+
  
  
-  {DIGIT}+       {printf("NUMBER %s\n", yytext); numNums++; }
-  
+  {DIGIT}+       {printf("NUMBER %s\n", yytext); pos += yyleng;} 
+  [0-9_]+[0-9A-Za-z_]* {printf("Error at line %i, column %i: identifier \"%s\" must begin with a letter\n", line, pos, yytext), pos += yyleng;} 
+  [0-9A-Za-z_]+[_]+    {printf("Error at line %i, column %i: identifier \"%s\" cannot end with an underscore\n", line, pos, yyext), pos += yyleng;} 
+
+
+
+
+  . {printf("Error at line %i, column %i: unrecognized symbol \"%s\"", line pos, yytext), pos += yyleng;} 
+
+ 
+ 
 %%
 	/* C functions used in lexer */
 
