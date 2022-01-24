@@ -7,9 +7,7 @@
    /* write your C code here for definitions of variables and including headers */
 %}
   DIGIT [0-9] 
-  ALPHA [A-Za-z] 
-  UNDER [_] 
-
+ 
    /* some common rules */
 
 %%
@@ -21,6 +19,20 @@
    "+" {printf("ADD\n"), pos += yyleng;} 
    "-" {printf("SUB\n"), pos += yyleng;}
    "%" {printf("MOD\n"), pos += yyleng;} 
+
+   ":=" {printf("ASSIGN\n"), pos += yyleng;} 
+   ":" {printf("COLON\n"), pos += yyleng;}
+   ";" {printf("SEMICOLON\n"), pos += yyleng;} 
+   "[" {printf("L_SQUARE_BRACKET\n"), pos += yyleng;} 
+   "]" {printf("R_SQUARE_BRACKET\n"), pos += yyleng;} 
+   "," {printf("COMMA\n"), pos += yyleng;} 
+   "<" {printf("LT\n"), pos += yyleng;} 
+   ">" {printf("GT\n"), pos += yyleng;} 
+   "<=" {printf("LTE\n"), pos += yyleng;} 
+   ">=" {printf("GTE\n"), pos += yyleng;} 
+   "==" {printf("EQ\n"), pos += yyleng;} 
+   "<>" {printf("NEQ\n"), pos += yyleng;}
+
 
    function {printf("FUNCTION\n"), pos += yyleng;} 
    beginparams {printf("BEGIN_PARAMS\n"), pos += yyleng;} 
@@ -57,16 +69,20 @@
    "<=" {printf("LTE\n"), pos += yyleng;}
    ">=" {printf("GTE\n"), pos += yyleng;}
 
- 
- 
+
+   
+  [##].* {line++; pos = 1;} 
+
   {DIGIT}+       {printf("NUMBER %s\n", yytext); pos += yyleng;} 
   [0-9_]+[0-9A-Za-z_]* {printf("Error at line %i, column %i: identifier \"%s\" must begin with a letter\n", line, pos, yytext), pos += yyleng;} 
   [0-9A-Za-z_]+[_]+    {printf("Error at line %i, column %i: identifier \"%s\" cannot end with an underscore\n", line, pos, yyext), pos += yyleng;} 
+  [ ] {pos += yyleng;} 
+  "\n" {pos = 1; line++;}
+  [\t] {pos += yyleng;}
 
-
-
-
-  . {printf("Error at line %i, column %i: unrecognized symbol \"%s\"", line pos, yytext), pos += yyleng;} 
+  
+  [A-Za-z]+[A-Za-z0-9_]*[A-Za-z0-9] {printf("IDENT %s\n", yytext), pos += yyleng;} 
+  . {printf("Error at line %i, column %i: unrecognized symbol \"%s\"", line pos, yytext), pos += yyleng; exit(0);} 
 
  
  
