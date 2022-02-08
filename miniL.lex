@@ -1,4 +1,5 @@
 %{
+   
    #include "y.tab.h"
    int pos = 1;
    int line = 1;
@@ -39,16 +40,16 @@ DIGIT [0-9]
 "false"  {pos += yyleng; return FALSE;}
 "return"  {pos += yyleng; return RETURN;}
 
-{DIGIT}+ {yyval.num = stoi(yytext); pos += yyleng; return NUMBER;}
+{DIGIT}+ {yylval.num = atoi(yytext); pos += yyleng; return NUMBER;}
 
 [0-9_]+[A-Za-z0-9_]* {printf("There is an error at line %i, column %i: identifier \"%s\" must begin with a letter\n", line, pos, yytext), pos += yyleng; exit(0);}
 
 [0-9A-Za-z_]+_ {printf("There is an error at line %i, column %i: identifier \"%s\" cannot end with an underscore\n", line, pos, yytext), pos += yyleng; exit(0);}
 
-[A-Za-z]+[0-9A-Za-z_]* {yyval.id = yytext; pos += yyleng; return IDENT;}
+[A-Za-z]+[0-9A-Za-z_]* {yylval.id = yytext; pos += yyleng; return IDENT;}
 
 "-"  {pos += yyleng; return SUB;}
-"+"  {pos += yyleng; return PLUS;}
+"+"  {pos += yyleng; return ADD;}
 "*"  {pos += yyleng; return MULT;}
 "/"  {pos += yyleng; return DIV;}
 "%"  {pos += yyleng; return MOD;}
@@ -82,8 +83,4 @@ int main(int argc, char ** argv) {
 
 }
 
-
-
-
-}
 

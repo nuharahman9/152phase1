@@ -2,10 +2,9 @@
    
     #include <stdio.h>
     #include <stdlib.h>
+    
     extern FILE * yyin; 
-    int yyerror(const char* msg);
-    int yyerror(string s); 
-    int yylex(void);
+    int yyerror(const char* s);
 %}
 
 %union 
@@ -83,7 +82,7 @@ fx: FUNCTION id SEMICOLON BEGIN_PARAMS decs END_PARAMS BEGIN_LOCALS decs END_LOC
 
 decs: dec SEMICOLON decs {printf("decs -> dec SEMICOLON decs\n");} | %empty {printf("decs -> epsilon\n");}
 
-dec: ids COLON INTEGER {printf("dec -> ids COLON INTEGER\n");} | ids COLON ARRAY L_SQUARE_BRACKET NUMBER R_SQUARE_BRACKET OF INTEGER {printf("dec -> ids COLON ARRAY L_SQUARE_BRACKET NUMBER %d R_SQUARE_BRACKET OF INTEGER\n", $3);}
+dec: ids COLON INTEGER {printf("dec -> ids COLON INTEGER\n");} | ids COLON ARRAY L_SQUARE_BRACKET number R_SQUARE_BRACKET OF INTEGER {printf("dec -> ids COLON ARRAY L_SQUARE_BRACKET number  R_SQUARE_BRACKET OF INTEGER\n");}
 
 ids: id {printf("ids -> id\n");} | id COMMA ids {printf("ids -> id COMMA ids\n");}
 
@@ -107,7 +106,7 @@ st_if: IF bool_exp THEN statements ENDIF {printf("st_if -> IF bool_exp THEN stat
 
 st_do: DO BEGIN_LOOP statements END_LOOP {printf("st_do -> DO BEGIN_LOOP statements END_LOOP\n");} 
 
-st_for: FOR x ASSIGN NUMBER SEMICOLON bool_exp SEMICOLON x ASSIGN expression BEGIN_LOOP statements END_LOOP {printf("st_for -> FOR x ASSIGN NUMBER %d SEMICOLON bool_exp SEMICOLON x ASSIGN expression BEGIN_LOOP statements END_LOOP\n", $2);}
+st_for: FOR x ASSIGN number SEMICOLON bool_exp SEMICOLON x ASSIGN expression BEGIN_LOOP statements END_LOOP {printf("st_for -> FOR x ASSIGN number  SEMICOLON bool_exp SEMICOLON x ASSIGN expression BEGIN_LOOP statements END_LOOP\n");}
 
 loop: COMMA loop {printf("loop -> COMMA loop\n");} | %empty {printf("loop -> epsilon\n");}  
 
@@ -131,19 +130,18 @@ multiplicative_exp: term {printf("multiplicative_exp -> term\n");} | term MULT m
 
 add_sub_exp: ADD expression {printf("add_sub_exp -> ADD expression\n");} | SUB expression {printf("add_sub_exp -> SUB expression\n");} |  %empty {printf("add_sub_exp -> epsilon\n");}
 
-term: x {printf("term -> x\n");} | NUMBER {printf("term -> NUMBER %d\n", $1);} | L_PAREN expression R_PAREN {printf("term -> L_PAREN expression R_PAREN\n");} | id L_PAREN expression exp_loop R_PAREN {printf("term -> id L_PAREN expression exp_loop R_PAREN\n");} 
+term: x {printf("term -> x\n");} | number {printf("term -> number\n");} | L_PAREN expression R_PAREN {printf("term -> L_PAREN expression R_PAREN\n");} | id L_PAREN expression exp_loop R_PAREN {printf("term -> id L_PAREN expression exp_loop R_PAREN\n");} 
 
+number: NUMBER {printf("number -> NUMBER %d\n", $1); }
 exp_loop: COMMA expression exp_loop {printf("exp_loop -> COMMA expression exp_loop\n");} | %empty {printf("exp_loop -> epsilon\n");}
 
 
 %%
-int yyerror (string s) {
-    extern int line
+int yyerror (const char* s) {
+    extern int line;
     extern int  pos;
-    extern char *yytext;
-    printf("Error at line %d, column %d: unexpected symbol %s\n", line, pos, yytext); 
+    printf("Error at line %d, column %d: unexpected symbol %s\n", line, pos, s); 
     exit(1);
 }
 		 
-void yyerror(const char* msg) {
-    return yyerror(string(msg)); }
+
