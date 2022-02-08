@@ -90,15 +90,16 @@ id: IDENT {printf("id -> IDENT %s\n", $1);}
 
 statements: statement SEMICOLON statements {printf("statements -> statement SEMICOLON statements\n");} | statement SEMICOLON {printf("statements -> statement SEMICOLON\n");}
 
-statement: st_return {printf("statement -> st_return\n");} | st_continue {printf("statement -> st_continue\n");}  | st_write {printf("statement -> st_write\n");} | st_read {printf("statement -> st_read\n");} | st_while {printf("statement -> st_while\n");} | st_if {printf("statement -> st_if\n");} | st_var {printf("statement -> st_var\n");}  | st_do {printf("statement -> st_do\n");} | st_for {printf("statement -> st_for\n");}
+statement: st_return {printf("statement -> st_return\n");} | st_continue {printf("statement -> st_continue\n");}  | st_break  {printf("statement -> st_break\n");}|  st_write {printf("statement -> st_write\n");} | st_read {printf("statement -> st_read\n");} | st_while {printf("statement -> st_while\n");} | st_if {printf("statement -> st_if\n");} | st_var {printf("statement -> st_var\n");}  | st_do {printf("statement -> st_do\n");} | st_for {printf("statement -> st_for\n");}
 
+st_break: BREAK {printf("st_break -> BREAK\n");}  
 st_return: RETURN expression {printf("st_return -> RETURN expression\n");} 
 
 st_continue: CONTINUE {printf("st_continue -> CONTINUE\n");}
 
-st_write: WRITE x loop {printf("st_write -> WRITE x loop\n");}
+st_write: WRITE x  {printf("st_write -> WRITE x SEMICOLON\n");}
 
-st_read: READ x loop {printf("st_read -> READ x loop\n");}
+st_read: READ x  {printf("st_read -> READ x SEMICOLON\n");}
 
 st_while: WHILE bool_exp BEGIN_LOOP statements END_LOOP {printf("st_while -> WHILE bool_exp BEGIN_LOOP statements END_LOOP\n");} 
 
