@@ -3,8 +3,9 @@
     #include <stdio.h>
     #include <stdlib.h>
     extern FILE * yyin; 
-    void yyerror(const char* msg);
-    void yyerror(string s); 
+    int yyerror(const char* msg);
+    int yyerror(string s); 
+    int yylex(void);
 %}
 
 %union 
@@ -82,11 +83,11 @@ fx: FUNCTION id SEMICOLON BEGIN_PARAMS decs END_PARAMS BEGIN_LOCALS decs END_LOC
 
 decs: dec SEMICOLON decs {printf("decs -> dec SEMICOLON decs\n");} | %empty {printf("decs -> epsilon\n");}
 
-dec: ids COLON INTEGER {printf("dec -> ids COLON INTEGER\n");} | ids COLON ARRAY L_SQUARE_BRACKET NUMBER R_SQUARE_BRACKET OF INTEGER {printf("dec -> ids COLON ARRAY L_SQUARE_BRACKET NUMBER R_SQUARE_BRACKET OF INTEGER\n");}
+dec: ids COLON INTEGER {printf("dec -> ids COLON INTEGER\n");} | ids COLON ARRAY L_SQUARE_BRACKET NUMBER R_SQUARE_BRACKET OF INTEGER {printf("dec -> ids COLON ARRAY L_SQUARE_BRACKET NUMBER %d R_SQUARE_BRACKET OF INTEGER\n", $3);}
 
 ids: id {printf("ids -> id\n");} | id COMMA ids {printf("ids -> id COMMA ids\n");}
 
-id: IDENT {printf("id -> IDENT\n");}
+id: IDENT {printf("id -> IDENT %s\n", $1);}
 
 statements: statement SEMICOLON statements {printf("statements -> statement SEMICOLON statements\n");} | statement SEMICOLON {printf("statements -> statement SEMICOLON\n");}
 
@@ -106,7 +107,7 @@ st_if: IF bool_exp THEN statements ENDIF {printf("st_if -> IF bool_exp THEN stat
 
 st_do: DO BEGIN_LOOP statements END_LOOP {printf("st_do -> DO BEGIN_LOOP statements END_LOOP\n");} 
 
-st_for: FOR x ASSIGN INTEGER SEMICOLON bool_exp SEMICOLON x ASSIGN expression BEGIN_LOOP statements END_LOOP {printf("st_for -> FOR x ASSIGN INTEGER SEMICOLON bool_exp SEMICOLON x ASSIGN expression BEGIN_LOOP statements END_LOOP\n");}
+st_for: FOR x ASSIGN NUMBER SEMICOLON bool_exp SEMICOLON x ASSIGN expression BEGIN_LOOP statements END_LOOP {printf("st_for -> FOR x ASSIGN NUMBER %d SEMICOLON bool_exp SEMICOLON x ASSIGN expression BEGIN_LOOP statements END_LOOP\n", $2);}
 
 loop: COMMA loop {printf("loop -> COMMA loop\n");} | %empty {printf("loop -> epsilon\n");}  
 
@@ -130,7 +131,7 @@ multiplicative_exp: term {printf("multiplicative_exp -> term\n");} | term MULT m
 
 add_sub_exp: ADD expression {printf("add_sub_exp -> ADD expression\n");} | SUB expression {printf("add_sub_exp -> SUB expression\n");} |  %empty {printf("add_sub_exp -> epsilon\n");}
 
-term: x {printf("term -> x\n");} | NUMBER {printf("term -> NUMBER\n");} | L_PAREN expression R_PAREN {printf("term -> L_PAREN expression R_PAREN\n");} | id L_PAREN expression exp_loop R_PAREN {printf("term -> id L_PAREN expression exp_loop R_PAREN\n");} 
+term: x {printf("term -> x\n");} | NUMBER {printf("term -> NUMBER %d\n", $1);} | L_PAREN expression R_PAREN {printf("term -> L_PAREN expression R_PAREN\n");} | id L_PAREN expression exp_loop R_PAREN {printf("term -> id L_PAREN expression exp_loop R_PAREN\n");} 
 
 exp_loop: COMMA expression exp_loop {printf("exp_loop -> COMMA expression exp_loop\n");} | %empty {printf("exp_loop -> epsilon\n");}
 
