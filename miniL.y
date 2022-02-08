@@ -1,8 +1,10 @@
 %{
-    #define YY_NO_UNPUT
+   
     #include <stdio.h>
     #include <stdlib.h>
+    extern FILE * yyin; 
     void yyerror(const char* msg);
+    void yyerror(string s); 
 %}
 
 %union 
@@ -43,6 +45,7 @@
 %token TRUE 
 %token FALSE 
 %token RETURN
+%token FOR 
 
 %left AND
 %left OR
@@ -61,7 +64,8 @@
 
 %token SEMICOLON 
 %token COLON 
-%token COMMA L_PAREN 
+%token COMMA 
+%token L_PAREN 
 %token R_PAREN 
 %token L_SQUARE_BRACKET 
 %token R_SQUARE_BRACKET
@@ -86,7 +90,7 @@ id: IDENT {printf("id -> IDENT\n");}
 
 statements: statement SEMICOLON statements {printf("statements -> statement SEMICOLON statements\n");} | statement SEMICOLON {printf("statements -> statement SEMICOLON\n");}
 
-statement: st_return {printf("statement -> st_return\n");} | st_continue {printf("statement -> st_continue\n");}  | st_write {printf("statement -> st_write\n");} | st_read {printf("statement -> st_read\n");} | st_while {printf("statement -> st_while\n");} | st_if {printf("statement -> st_if\n");} | st_var {printf("statement -> st_var\n");}  | st_do {printf("statement -> st_do\n")} | st_for {printf("statement -> st_for\n");}
+statement: st_return {printf("statement -> st_return\n");} | st_continue {printf("statement -> st_continue\n");}  | st_write {printf("statement -> st_write\n");} | st_read {printf("statement -> st_read\n");} | st_while {printf("statement -> st_while\n");} | st_if {printf("statement -> st_if\n");} | st_var {printf("statement -> st_var\n");}  | st_do {printf("statement -> st_do\n");} | st_for {printf("statement -> st_for\n");}
 
 st_return: RETURN expression {printf("st_return -> RETURN expression\n");} 
 
@@ -104,11 +108,13 @@ st_do: DO BEGIN_LOOP statements END_LOOP {printf("st_do -> DO BEGIN_LOOP stateme
 
 st_for: FOR x ASSIGN INTEGER SEMICOLON bool_exp SEMICOLON x ASSIGN expression BEGIN_LOOP statements END_LOOP {printf("st_for -> FOR x ASSIGN INTEGER SEMICOLON bool_exp SEMICOLON x ASSIGN expression BEGIN_LOOP statements END_LOOP\n");}
 
-bool_exp: relation_exps {printf("bool_exp -> relation_exps\n");} } bool_exp OR relation_exps {printf("bool_exp -> bool_exp OR relation_exps\n");}
+loop: COMMA loop {printf("loop -> COMMA loop\n");} | %empty {printf("loop -> epsilon\n");}  
+
+bool_exp: relation_exps {printf("bool_exp -> relation_exps\n");} |  bool_exp OR relation_exps {printf("bool_exp -> bool_exp OR relation_exps\n");}
 
 relation_exps: relation_exp {printf("relation_exps -> relation_exp\n");} | relation_exps AND relation_exp {printf("relation_exps -> relation_exps AND relation_exp\n");}
 
-relation_exp: NOT exp_comp {printf("relation_exp -> NOT exp_comp\n");} | exp_comp  {printf("relation_exp -> exp_comp\n");} | TRUE  {printf("relation_exp -> TRUE\n");} | FALSE  {printf("relation_exp -> FALSE\n);} | L_PAREN bool_exp R_PAREN  {printf("relation_exp -> L_PAREN bool_exp R_PAREN\n");}
+relation_exp: NOT exp_comp {printf("relation_exp -> NOT exp_comp\n");} | exp_comp  {printf("relation_exp -> exp_comp\n");} | TRUE  {printf("relation_exp -> TRUE\n");} | FALSE  {printf("relation_exp -> FALSE\n");} | L_PAREN bool_exp R_PAREN  {printf("relation_exp -> L_PAREN bool_exp R_PAREN\n");}
 
 exp_comp: expression comp expression {printf("exp_comp -> expression comp expression\n");} 
 
@@ -122,21 +128,21 @@ expression: multiplicative_exp add_sub_exp {printf("expression -> multiplicative
 
 multiplicative_exp: term {printf("multiplicative_exp -> term\n");} | term MULT multiplicative_exp {printf("multiplicative_exp -> term MULT multiplicative_exp\n");} | term DIV multiplicative_exp {printf("multiplicative_exp -> term DIV multiplicative_exp\n");} | term MOD multiplicative_exp {printf("multiplicative_exp -> term MOD multiplicative_exp\n");}
 
-add_sub_exp: ADD expression {printf("add_sub_exp -> ADD expression\n");} | SUB expression {printf("add_sub_exp -> SUB expression\n");} %empty {printf("add_sub_exp -> epsilon\n");}
+add_sub_exp: ADD expression {printf("add_sub_exp -> ADD expression\n");} | SUB expression {printf("add_sub_exp -> SUB expression\n");} |  %empty {printf("add_sub_exp -> epsilon\n");}
 
 term: x {printf("term -> x\n");} | NUMBER {printf("term -> NUMBER\n");} | L_PAREN expression R_PAREN {printf("term -> L_PAREN expression R_PAREN\n");} | id L_PAREN expression exp_loop R_PAREN {printf("term -> id L_PAREN expression exp_loop R_PAREN\n");} 
 
 exp_loop: COMMA expression exp_loop {printf("exp_loop -> COMMA expression exp_loop\n");} | %empty {printf("exp_loop -> epsilon\n");}
 
-x -> id {printf("x -> id\n");} | id L_SQUARE_BRACKET expression R_SQUARE_BRACKET L_SQUARE_BRACKET expression R_SQUARE_BRACKET {printf("x -> id L_SQUARE_BRACKET expression R_SQUARE_BRACKET L_SQUARE_BRACKET expression R_SQUARE_BRACKET\n");} | id L_SQUARE_BRACKET expression R_SQUARE_BRACKET {printf("x -> id L_SQUARE_BRACKET expression R_SQUARE_BRACKET\n");}
-
 
 %%
-		 
-void yyerror(const char* msg) {
-    extern int rowNum;
-    extern char* yytext;
-    printf("error on line %d at symbol %a\n", rowNum, yytext);
-    printf("%s\n", msg);
+int yyerror (string s) {
+    extern int line
+    extern int  pos;
+    extern char *yytext;
+    printf("Error at line %d, column %d: unexpected symbol %s\n", line, pos, yytext); 
     exit(1);
 }
+		 
+void yyerror(const char* msg) {
+    return yyerror(string(msg)); }

@@ -1,4 +1,5 @@
 %{
+   #include "y.tab.h"
    int pos = 1;
    int line = 1;
 
@@ -70,13 +71,16 @@ DIGIT [0-9]
                         
 %%
 
-int main(int argc, char ** argv){
- if (argc == 2) {
-        yyin = fopen(argv[1], "r");
- }
+int main(int argc, char ** argv) { 
+ if (argc == 2) { 
+   yyin = fopen(argv[1], "r"); 
 
- yylex();
-if (argc == 2) { fclose(yyin); }
+} else { yyin = stdin; } 
+
+  yyparse();
+
+}
+
 
 
 
