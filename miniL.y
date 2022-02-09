@@ -109,7 +109,6 @@ st_do: DO BEGIN_LOOP statements END_LOOP {printf("st_do -> DO BEGIN_LOOP stateme
 
 st_for: FOR x ASSIGN number SEMICOLON bool_exp SEMICOLON x ASSIGN expression BEGIN_LOOP statements END_LOOP {printf("st_for -> FOR x ASSIGN number  SEMICOLON bool_exp SEMICOLON x ASSIGN expression BEGIN_LOOP statements END_LOOP\n");}
 
-loop: COMMA loop {printf("loop -> COMMA loop\n");} | %empty {printf("loop -> epsilon\n");}  
 
 bool_exp: relation_exps {printf("bool_exp -> relation_exps\n");} |  bool_exp OR relation_exps {printf("bool_exp -> bool_exp OR relation_exps\n");}
 
