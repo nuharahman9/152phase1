@@ -6,15 +6,17 @@ decs -> dec SEMICOLON decs | epsilon
 dec -> ids COLON INTEGER | ids COLON ARRAY L_SQUARE_BRACKET number R_SQUARE_BRACKET OF INTEGER 
 
 ids -> id | id COMMA ids 
+number -> NUMBER 
 id -> IDENT 
 
 statements -> statement SEMICOLON statements | statement SEMICOLON 
-statement -> st_return | st_continue | st_write | st_read | st_while | st_if | st_var | st_do | st_for
+statement -> st_return | st_continue | st_write | st_read | st_while | st_break | st_if | st_var | st_do | st_for
 
 st_return -> RETURN expression 
+st_break -> BREAK 
 st_continue -> CONTINUE 
-st_write -> WRITE x loop
-st_read -> READ x loop 
+st_write -> WRITE x 
+st_read -> READ x 
 st_while -> WHILE bool_exp BEGIN_LOOP statements END_LOOP 
 st_if -> IF bool_exp THEN statements ENDIF
 st_do -> DO BEGIN_LOOP statements END_LOOP 
