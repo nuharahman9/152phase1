@@ -3,26 +3,26 @@ functions -> fx functions | epsilon
 fx -> FUNCTION id SEMICOLON BEGIN_PARAMS decs END_PARAMS BEGIN_LOCALS decs END_LOCALS BEGIN_BODY statements END_BODY 
 
 decs -> dec SEMICOLON decs | epsilon 
-dec -> ids COLON INTEGER | ids COLON ARRAY L_SQUARE_BRACKET NUMBER R_SQUARE_BRACKET OF INTEGER 
+dec -> ids COLON INTEGER | ids COLON ARRAY L_SQUARE_BRACKET number R_SQUARE_BRACKET OF INTEGER 
 
 ids -> id | id COMMA ids 
 id -> IDENT 
 
 statements -> statement SEMICOLON statements | statement SEMICOLON 
-statement -> return | continue | write | read | while | if | var | do | for
+statement -> st_return | st_continue | st_write | st_read | st_while | st_if | st_var | st_do | st_for
 
-return -> RETURN expression 
-continue -> CONTINUE 
-write -> WRITE x loop
-read -> READ x loop 
-while -> WHILE bool-exp BEGIN_LOOP statements END_LOOP 
-if -> IF bool-exp THEN statements ENDIF
-do -> DO BEGIN_LOOP statements END_LOOP 
-for -> FOR x ASSIGN INTEGER SEMICOLON bool-exp SEMICOLON x ASSIGN expression BEGIN_LOOP statements END_LOOP 
+st_return -> RETURN expression 
+st_continue -> CONTINUE 
+st_write -> WRITE x loop
+st_read -> READ x loop 
+st_while -> WHILE bool_exp BEGIN_LOOP statements END_LOOP 
+st_if -> IF bool_exp THEN statements ENDIF
+st_do -> DO BEGIN_LOOP statements END_LOOP 
+st_for -> FOR x ASSIGN number SEMICOLON bool_exp SEMICOLON x ASSIGN expression BEGIN_LOOP statements END_LOOP 
 
-bool-exp -> relation-exps | bool-exp OR relation-exps 
-relation-exps -> relation-exps AND relation-exp | relation-exp 
-relation-exp -> exp_comp | NOT exp_comp | TRUE | FALSE | L_PAREN bool-exp R_PAREN
+bool_exp -> relation_exps | bool_exp OR relation-exps 
+relation_exps -> relation_exps AND relation_exp | relation_exp 
+relation_exp -> exp_comp | NOT exp_comp | TRUE | FALSE | L_PAREN bool_exp R_PAREN
 exp_comp -> expression comp expression 
 comp -> EQ | NEQ | GT | LTE | GTE 
 
@@ -32,6 +32,7 @@ x -> id | id L_SQUARE_BRACKET expression R_SQUARE_BRACKET | id L_SQUARE_BRACKET 
 expression -> multiplicative_expr add_sub_expr 
 multiplicative_expr -> term | term MULT multiplicative_expr | term DIV multiplicative_expr | term MOD multiplicative_expr 
 add_sub_expr -> ADD expression | SUB expression | epsilon 
-term -> x | NUMBER | L_PAREN expression R_PAREN | id L_PAREN expression exp-loop R_PAREN 
-exp-loop -> COMMA expression exp-loop | epsilon 
-
+term -> x | 
+| L_PAREN expression R_PAREN | id L_PAREN expression exp_loop R_PAREN 
+exp_loop -> COMMA expression exp_loop | epsilon 
+number -> NUMBER
