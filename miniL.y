@@ -2,22 +2,78 @@
    
     #include <stdio.h>
     #include <stdlib.h>
+    #include <vector> 
+    #include <string> 
     
     extern FILE * yyin; 
     int yyerror(const char* s);
+
+    char *idToken; 
+    int numberToken; 
+    int count_names = 0; 
+    enum Type { Integer, Array }l
+    struct Symbol { 
+        std::string name; 
+        Type type; 
+    } 
+    struct Function { 
+        std::string name; 
+        std::vector<Symbol> declarations; 
+    };
+    std::vector <Function> symbol_table; 
+    Function *get_function(){
+        int last = symbol_table.size()-1; 
+        return &symbol_table[last];
+    }
+    bool find(std::string &value) {
+        Function *f = get_function();
+        for(int i=0; i < f->declarations.size(); i++) {
+        Symbol *s = &f->declarations[i];
+        if (s->name == value) {
+      return true;
+        }
+      }
+    return false;
+    }
+
+    void add_function_to_symbol_table(std::string &value) {
+        Function f; 
+        f.name = value; 
+        symbol_table.push_back(f);
+    }
+
+    void add_variable_to_symbol_table(std::string &value, Type t) {
+        Symbol s;
+        s.name = value;
+        s.type = t;
+        Function *f = get_function();
+        f->declarations.push_back(s);
+    }
+
+    void print_symbol_table(void) {
+        printf("symbol table:\n");
+        printf("--------------------\n");
+        for(int i=0; i<symbol_table.size(); i++) {
+            printf("function: %s\n", symbol_table[i].name.c_str());
+            for(int j=0; j<symbol_table[i].declarations.size(); j++) {
+            printf("  locals: %s\n", symbol_table[i].declarations[j].name.c_str());
+            }
+        }
+        printf("--------------------\n");
+    }
+
+
 %}
 
 %union 
 {
-    char* id;
-    int num;
+    char* op_val; 
 }
 
 %error-verbose
 %start P 
 
-%token <num> NUMBER
-%token <id> IDENT
+
 
 %token FUNCTION 
 %token BEGIN_PARAMS 
@@ -72,21 +128,21 @@
 
 %left ASSIGN
 
+%token <op_val> NUMBER
+%token <op_val> IDENT
+%type <op_val> symbol 
+
 %%
 
 P: functions {}
 
 functions: fx functions {}
 
-fx: FUNCTION id SEMICOLON BEGIN_PARAMS decs END_PARAMS BEGIN_LOCALS decs END_LOCALS BEGIN_BODY statements END_BODY {}
+fx: FUNCTION symbol SEMICOLON BEGIN_PARAMS decs END_PARAMS BEGIN_LOCALS decs END_LOCALS BEGIN_BODY statements END_BODY {}
 
 decs: dec SEMICOLON decs {}
 
-dec: ids COLON INTEGER {}
-
-ids: id {}
-
-id: IDENT {}
+dec: symbol COLON INTEGER {}
 
 statements: statement SEMICOLON statements {} | statement SEMICOLON {}
 
@@ -107,7 +163,7 @@ st_if: IF bool_exp THEN statements ENDIF {}
 
 st_do: DO BEGIN_LOOP statements END_LOOP {} 
 
-st_for: FOR x ASSIGN number SEMICOLON bool_exp SEMICOLON x ASSIGN expression BEGIN_LOOP statements END_LOOP {}
+st_for: FOR x ASSIGN symbol SEMICOLON bool_exp SEMICOLON x ASSIGN expression BEGIN_LOOP statements END_LOOP {}
 
 
 bool_exp: relation_exps {}} |  bool_exp OR relation_exps {}
@@ -122,7 +178,7 @@ comp: EQ {} | NEQ {} | GT {} | LTE {} | GTE {}
 
 st_var: x ASSIGN expression {} 
 
-x: id {} | id L_SQUARE_BRACKET expression R_SQUARE_BRACKET {}} | id L_SQUARE_BRACKET expression R_SQUARE_BRACKET L_SQUARE_BRACKET expression R_SQUARE_BRACKET {}
+x: symbol {} | symbol L_SQUARE_BRACKET expression R_SQUARE_BRACKET {}} | symbol L_SQUARE_BRACKET expression R_SQUARE_BRACKET L_SQUARE_BRACKET expression R_SQUARE_BRACKET {}
 
 expression: multiplicative_exp add_sub_exp {}
 
@@ -130,9 +186,9 @@ multiplicative_exp: term {} | term MULT multiplicative_exp {} | term DIV multipl
 
 add_sub_exp: ADD expression {} | SUB expression {} |  %empty {}
 
-term: x {} | number {} | L_PAREN expression R_PAREN {} | id L_PAREN expression exp_loop R_PAREN {} 
+term: x {} | symbol {} | L_PAREN expression R_PAREN {} | symbol L_PAREN expression exp_loop R_PAREN {} 
 
-number: NUMBER {}
+symbol: NUMBER {} | IDENT {}
 exp_loop: COMMA expression exp_loop {} | %empty {}
 
 
