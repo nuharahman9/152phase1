@@ -2,78 +2,22 @@
    
     #include <stdio.h>
     #include <stdlib.h>
-    #include <vector> 
-    #include <string> 
     
     extern FILE * yyin; 
     int yyerror(const char* s);
-
-    char *idToken; 
-    int numberToken; 
-    int count_names = 0; 
-    enum Type { Integer, Array }l
-    struct Symbol { 
-        std::string name; 
-        Type type; 
-    } 
-    struct Function { 
-        std::string name; 
-        std::vector<Symbol> declarations; 
-    };
-    std::vector <Function> symbol_table; 
-    Function *get_function(){
-        int last = symbol_table.size()-1; 
-        return &symbol_table[last];
-    }
-    bool find(std::string &value) {
-        Function *f = get_function();
-        for(int i=0; i < f->declarations.size(); i++) {
-        Symbol *s = &f->declarations[i];
-        if (s->name == value) {
-      return true;
-        }
-      }
-    return false;
-    }
-
-    void add_function_to_symbol_table(std::string &value) {
-        Function f; 
-        f.name = value; 
-        symbol_table.push_back(f);
-    }
-
-    void add_variable_to_symbol_table(std::string &value, Type t) {
-        Symbol s;
-        s.name = value;
-        s.type = t;
-        Function *f = get_function();
-        f->declarations.push_back(s);
-    }
-
-    void print_symbol_table(void) {
-        printf("symbol table:\n");
-        printf("--------------------\n");
-        for(int i=0; i<symbol_table.size(); i++) {
-            printf("function: %s\n", symbol_table[i].name.c_str());
-            for(int j=0; j<symbol_table[i].declarations.size(); j++) {
-            printf("  locals: %s\n", symbol_table[i].declarations[j].name.c_str());
-            }
-        }
-        printf("--------------------\n");
-    }
-
-
 %}
 
 %union 
 {
-    char* op_val; 
+    char* id;
+    int num;
 }
 
 %error-verbose
 %start P 
 
-
+%token <num> NUMBER
+%token <id> IDENT
 
 %token FUNCTION 
 %token BEGIN_PARAMS 
@@ -128,68 +72,68 @@
 
 %left ASSIGN
 
-%token <op_val> NUMBER
-%token <op_val> IDENT
-%type <op_val> symbol 
-
 %%
 
-P: functions {}
+P: functions {printf("P -> functions\n");}
 
-functions: fx functions {}
+functions: fx functions {printf("functions -> fx functions\n");} | %empty {printf("functions -> epsilon\n");}
 
-fx: FUNCTION symbol SEMICOLON BEGIN_PARAMS decs END_PARAMS BEGIN_LOCALS decs END_LOCALS BEGIN_BODY statements END_BODY {}
+fx: FUNCTION id SEMICOLON BEGIN_PARAMS decs END_PARAMS BEGIN_LOCALS decs END_LOCALS BEGIN_BODY statements END_BODY {printf("fx -> FUNCTION id SEMICOLON BEGIN_PARAMS decs END_PARAMS BEGIN_LOCALS decs END_LOCALS BEGIN_BODY statements END_BODY\n");}
 
-decs: dec SEMICOLON decs {}
+decs: dec SEMICOLON decs {printf("decs -> dec SEMICOLON decs\n");} | %empty {printf("decs -> epsilon\n");}
 
-dec: symbol COLON INTEGER {}
+dec: ids COLON INTEGER {printf("dec -> ids COLON INTEGER\n");} | ids COLON ARRAY L_SQUARE_BRACKET number R_SQUARE_BRACKET OF INTEGER {printf("dec -> ids COLON ARRAY L_SQUARE_BRACKET number  R_SQUARE_BRACKET OF INTEGER\n");}
 
-statements: statement SEMICOLON statements {} | statement SEMICOLON {}
+ids: id {printf("ids -> id\n");} | id COMMA ids {printf("ids -> id COMMA ids\n");}
 
-statement: st_return {} | st_continue {}  | st_break  {}|  st_write {} | st_read {} | st_while {} | st_if {p} | st_var {}  | st_do {} | st_for {}
+id: IDENT {printf("id -> IDENT %s\n", $1);}
 
-st_break: BREAK {}  
-st_return: RETURN expression {} 
+statements: statement SEMICOLON statements {printf("statements -> statement SEMICOLON statements\n");} | statement SEMICOLON {printf("statements -> statement SEMICOLON\n");}
 
-st_continue: CONTINUE {}
+statement: st_return {printf("statement -> st_return\n");} | st_continue {printf("statement -> st_continue\n");}  | st_break  {printf("statement -> st_break\n");}|  st_write {printf("statement -> st_write\n");} | st_read {printf("statement -> st_read\n");} | st_while {printf("statement -> st_while\n");} | st_if {printf("statement -> st_if\n");} | st_var {printf("statement -> st_var\n");}  | st_do {printf("statement -> st_do\n");} | st_for {printf("statement -> st_for\n");}
 
-st_write: WRITE x  {}
+st_break: BREAK {printf("st_break -> BREAK\n");}  
+st_return: RETURN expression {printf("st_return -> RETURN expression\n");} 
 
-st_read: READ x  {}
+st_continue: CONTINUE {printf("st_continue -> CONTINUE\n");}
 
-st_while: WHILE bool_exp BEGIN_LOOP statements END_LOOP {} 
+st_write: WRITE x  {printf("st_write -> WRITE x SEMICOLON\n");}
 
-st_if: IF bool_exp THEN statements ENDIF {} 
+st_read: READ x  {printf("st_read -> READ x SEMICOLON\n");}
 
-st_do: DO BEGIN_LOOP statements END_LOOP {} 
+st_while: WHILE bool_exp BEGIN_LOOP statements END_LOOP {printf("st_while -> WHILE bool_exp BEGIN_LOOP statements END_LOOP\n");} 
 
-st_for: FOR x ASSIGN symbol SEMICOLON bool_exp SEMICOLON x ASSIGN expression BEGIN_LOOP statements END_LOOP {}
+st_if: IF bool_exp THEN statements ENDIF {printf("st_if -> IF bool_exp THEN statements ENDIF\n");} 
+
+st_do: DO BEGIN_LOOP statements END_LOOP {printf("st_do -> DO BEGIN_LOOP statements END_LOOP\n");} 
+
+st_for: FOR x ASSIGN number SEMICOLON bool_exp SEMICOLON x ASSIGN expression BEGIN_LOOP statements END_LOOP {printf("st_for -> FOR x ASSIGN number  SEMICOLON bool_exp SEMICOLON x ASSIGN expression BEGIN_LOOP statements END_LOOP\n");}
 
 
-bool_exp: relation_exps {}} |  bool_exp OR relation_exps {}
+bool_exp: relation_exps {printf("bool_exp -> relation_exps\n");} |  bool_exp OR relation_exps {printf("bool_exp -> bool_exp OR relation_exps\n");}
 
-relation_exps: relation_exp {} | relation_exps AND relation_exp {}
+relation_exps: relation_exp {printf("relation_exps -> relation_exp\n");} | relation_exps AND relation_exp {printf("relation_exps -> relation_exps AND relation_exp\n");}
 
-relation_exp: NOT exp_comp {} | exp_comp  {} | TRUE  {} | FALSE  {} | L_PAREN bool_exp R_PAREN  {}
+relation_exp: NOT exp_comp {printf("relation_exp -> NOT exp_comp\n");} | exp_comp  {printf("relation_exp -> exp_comp\n");} | TRUE  {printf("relation_exp -> TRUE\n");} | FALSE  {printf("relation_exp -> FALSE\n");} | L_PAREN bool_exp R_PAREN  {printf("relation_exp -> L_PAREN bool_exp R_PAREN\n");}
 
-exp_comp: expression comp expression {} 
+exp_comp: expression comp expression {printf("exp_comp -> expression comp expression\n");} 
 
-comp: EQ {} | NEQ {} | GT {} | LTE {} | GTE {}
+comp: EQ {printf("comp -> EQ\n");} | NEQ {printf("comp -> NEQ\n");} | GT {printf("comp -> GT\n");} | LTE {printf("comp -> LTE\n");} | GTE {printf("comp -> GTE\n");}
 
-st_var: x ASSIGN expression {} 
+st_var: x ASSIGN expression {printf("st_var -> x ASSIGN expression\n");} 
 
-x: symbol {} | symbol L_SQUARE_BRACKET expression R_SQUARE_BRACKET {}} | symbol L_SQUARE_BRACKET expression R_SQUARE_BRACKET L_SQUARE_BRACKET expression R_SQUARE_BRACKET {}
+x: id {printf("x -> id\n");} | id L_SQUARE_BRACKET expression R_SQUARE_BRACKET {printf("x -> id L_SQUARE_BRACKET expression R_SQUARE_BRACKET\n");} | id L_SQUARE_BRACKET expression R_SQUARE_BRACKET L_SQUARE_BRACKET expression R_SQUARE_BRACKET {printf("x -> id L_SQUARE_BRACKET expression R_SQUARE_BRACKET L_SQUARE_BRACKET expression R_SQUARE_BRACKET\n");}
 
-expression: multiplicative_exp add_sub_exp {}
+expression: multiplicative_exp add_sub_exp {printf("expression -> multiplicative_exp add_sub_exp\n");}
 
-multiplicative_exp: term {} | term MULT multiplicative_exp {} | term DIV multiplicative_exp {} | term MOD multiplicative_exp {}
+multiplicative_exp: term {printf("multiplicative_exp -> term\n");} | term MULT multiplicative_exp {printf("multiplicative_exp -> term MULT multiplicative_exp\n");} | term DIV multiplicative_exp {printf("multiplicative_exp -> term DIV multiplicative_exp\n");} | term MOD multiplicative_exp {printf("multiplicative_exp -> term MOD multiplicative_exp\n");}
 
-add_sub_exp: ADD expression {} | SUB expression {} |  %empty {}
+add_sub_exp: ADD expression {printf("add_sub_exp -> ADD expression\n");} | SUB expression {printf("add_sub_exp -> SUB expression\n");} |  %empty {printf("add_sub_exp -> epsilon\n");}
 
-term: x {} | symbol {} | L_PAREN expression R_PAREN {} | symbol L_PAREN expression exp_loop R_PAREN {} 
+term: x {printf("term -> x\n");} | number {printf("term -> number\n");} | L_PAREN expression R_PAREN {printf("term -> L_PAREN expression R_PAREN\n");} | id L_PAREN expression exp_loop R_PAREN {printf("term -> id L_PAREN expression exp_loop R_PAREN\n");} 
 
-symbol: NUMBER {} | IDENT {}
-exp_loop: COMMA expression exp_loop {} | %empty {}
+number: NUMBER {printf("number -> NUMBER %d\n", $1); }
+exp_loop: COMMA expression exp_loop {printf("exp_loop -> COMMA expression exp_loop\n");} | %empty {printf("exp_loop -> epsilon\n");}
 
 
 %%
