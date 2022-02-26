@@ -1,20 +1,28 @@
-%{
-   
-    #include <stdio.h>
-    #include <stdlib.h>
-    
-    extern FILE * yyin; 
-    int yyerror(const char* s);
-%}
 
-%union 
-{
-    char* id;
-    int num;
-}
+nclude <stdio.h>
+#include <set>
+#include <map>
+#include <stdlib.h>
+#include <cstring>
 
-%error-verbose
-%start P 
+using std::string;
+using std::set;
+using std::map;
+
+int yylex(void);
+void yyerror( const char* msg );
+int numTemps, numLabels = 0;
+string tem();
+string lab();
+
+extern int currLine;
+extern int currPos;
+FILE* yyin;
+bool hasMain = false;
+
+map<string, string> varTemp;
+map<string, int> arrSize; 
+set<string> definedFns
 
 %token <num> NUMBER
 %token <id> IDENT
@@ -71,31 +79,218 @@
 %token R_SQUARE_BRACKET
 
 %left ASSIGN
-
 %%
 
-P: functions {printf("P -> functions\n");}
+start: 
+        functions
+;
+functions: /* ε */ 
+    { 
+        if( !hasMain ){
+            printf( "No main function declared\n" );
+        } 
+    }
+    | function functions { }
+;
 
-functions: fx functions {printf("functions -> fx functions\n");} | %empty {printf("functions -> epsilon\n");}
+declarations: /* ε */ { 
+        $$.code = strdup( "" );
+        $$.place = strdup( "" );
+    }
+    | declaration SEMICOLON declarations { 
+        string temp;
+        temp.append( $1.code ).append( $3.code );
+        $$.code = strdup( temp.c_str() );
+        $$.place = strdup( "" );
+    };
+;
 
-fx: FUNCTION id SEMICOLON BEGIN_PARAMS decs END_PARAMS BEGIN_LOCALS decs END_LOCALS BEGIN_BODY statements END_BODY {printf("fx -> FUNCTION id SEMICOLON BEGIN_PARAMS decs END_PARAMS BEGIN_LOCALS decs END_LOCALS BEGIN_BODY statements END_BODY\n");}
+function: FUNCTION ident SEMICOLON BEGIN_PARAMS declarations END_PARAMS BEGIN_LOCALS declarations END_LOCALS BEGINBODY statements ENDBODY 
+    {
+        string temp = "func ";
+        string s = $2.place;
+        temp.append( s ).append( "\n" );
 
-decs: dec SEMICOLON decs {printf("decs -> dec SEMICOLON decs\n");} | %empty {printf("decs -> epsilon\n");}
+        if( s == "main" ){
+                hasMain = true;
+        }
 
-dec: ids COLON INTEGER {printf("dec -> ids COLON INTEGER\n");} | ids COLON ARRAY L_SQUARE_BRACKET number R_SQUARE_BRACKET OF INTEGER {printf("dec -> ids COLON ARRAY L_SQUARE_BRACKET number  R_SQUARE_BRACKET OF INTEGER\n");}
+        temp.append( declares ).append( $8.code );
 
-ids: id {printf("ids -> id\n");} | id COMMA ids {printf("ids -> id COMMA ids\n");}
+        string statements = $11.code;
+        if( statements.find( "continue" ) != string::npos ){
+            printf( "ERROR: Continue outside loop in function %s\n", $2.place);
+        }
 
-id: IDENT {printf("id -> IDENT %s\n", $1);}
+        temp.append( statements ).append( "endfunc\n\n" );
+        printf( temp.c_str() );
+    }
 
-statements: statement SEMICOLON statements {printf("statements -> statement SEMICOLON statements\n");} | statement SEMICOLON {printf("statements -> statement SEMICOLON\n");}
+ident: IDENT { 
+    if( definedFns.find( $1 ) != definedFns.end() ){
+        printf( "function %s is declared already.\n", $1 );
+    } else {
+        definedFns.insert( $1 );
+    }
+    $$.place = strdup( $1 );
+    $$.code = strdup( "" );
+    // printf( "ident -> IDENT %s\n", $1 ); 
+}
+;
 
-statement: st_return {printf("statement -> st_return\n");} | st_continue {printf("statement -> st_continue\n");}  | st_break  {printf("statement -> st_break\n");}|  st_write {printf("statement -> st_write\n");} | st_read {printf("statement -> st_read\n");} | st_while {printf("statement -> st_while\n");} | st_if {printf("statement -> st_if\n");} | st_var {printf("statement -> st_var\n");}  | st_do {printf("statement -> st_do\n");} | st_for {printf("statement -> st_for\n");}
+identifiers: ident { 
+    // printf( "identifiers -> ident\n"); 
+    $$.place = strdup( $1.place );
+    $$.code = strdup( "" );
+}
+| ident COMMA identifiers { 
+    //printf( "identifiers -> ident COMMA identifiers\n"); 
+    string s;
+    s.append( $1.place ).append( "|" ).append( $3.place );
+    $$.place = strdup( s.c_str() );
+    $$.code = strdup( "" );
+}
+;
 
-st_break: BREAK {printf("st_break -> BREAK\n");}  
-st_return: RETURN expression {printf("st_return -> RETURN expression\n");} 
+statements: statement SEMICOLON { 
+    //printf( "statements -> ε\n"); 
+    $$.code = strdup( $1.code );
+}
+| statement SEMICOLON statements { 
+    //printf( "statements -> statement SEMICOLON statements\n"); 
+    string temp;
+    temp.append( $1.code );
+    temp.append( $3.code );
+    $$.code = strdup( temp.c_str() );
+}
+;
 
-st_continue: CONTINUE {printf("st_continue -> CONTINUE\n");}
+bool_expr: rel { printf( "bool_expr -> rel\n"); }
+    | rel OR bool_expr { printf( "bool_expr -> rel OR bool_expr\n"); }
+;
+
+rel: relex { printf( "rel -> relex\n"); }
+    | relex AND rel { printf( "bool_expr -> relex AND rel\n"); }
+;
+
+relex: relsub { printf( "relex -> relsub\n"); }
+    | NOT relsub  { printf( "relex _> NOT relsub\n"); }
+;
+
+relsub: expression comp expression { printf( "relsub -> expression comp expression\n"); }
+    | TRUE                           { printf( "relsub -> TRUE\n"); }
+    | FALSE                          { printf( "relsub -> FALSE\n"); }
+    | L_PAREN bool_expr R_PAREN      { printf( "relsub -> L_PAREN bool_expr R_PAREN\n"); }
+;
+
+comp: EQ       { printf( "comp -> EQ\n"); }
+    | NEQ  { printf( "comp -> NEQ\n"); }
+    | GT   { printf( "comp -> GT\n"); }
+    | LTE  { printf( "comp -> LTE"); }
+    | LT   { printf( "comp -> LT\n"); 
+    | GTE  { printf( "comp -> GTE\n"); }
+;
+
+var: ident { 
+    if( DEBUG_OUTPUT ) { printf( "var -> ident\n" );} 
+    string id = $1.place;
+    //check undeclared vars check1
+    if( definedFns.find( id) == definedFns.end() && varTemp.find( id ) == varTemp.end() ){ //was not found
+        string s = "Using an undeclared variable " + $1.place;
+        yyerror( s.c_str() );
+    }
+    else if( arrSize[id] > 1 ){ //check if array check6
+        string s = "Identifier did not provide index for array identifer " + id;
+        yyerror( s.c_str() );
+    }
+    $$.place = strdup( id.c_str() );
+    $$.code = strdup( "" )
+    $$.arr = false;
+}
+| ident L_SQUARE_BRACKET expression R_SQUARE_BRACKET {
+    if(DEBUG_OUTPUT) printf( " var -> ident L_SQUARE_BRACKET expression R_SQUARE_BRACKET\n" ); 
+    string id = $1.place;
+    //check undeclared vars check1
+    if( definedFns.find( id) == definedFns.end() && varTemp.find( id ) == varTemp.end() ){ //was not found
+        string s = "Using an undeclared variable " + $1.place;
+        yyerror( s.c_str() );
+    }
+    else if( arrSize.find( id ) == arrSize.end() ){ //check if array check6
+        string s = "Identifier is not an array identifer " + id;
+        yyerror( s.c_str() );
+    }
+    string t;
+    t.append( $1.place ).append( ", " ).append( $3.place );
+    $$.code = strdup( $3.code );
+    $$.place = strdup( t.c_str() );
+    $$.arr = true;
+}
+;
+
+var_list: var {
+    if(DEBUG_OUTPUT) printf( "var_list -> var\n" );
+    string t;
+    if( $1.arr ){
+        t.append( ".[]| ");
+    }
+    else {
+        t.append( ".| " );
+    }
+    t.append( $1.place ).append( "\n" );
+
+    $$.code = strdup( t.c_str() );
+    $$.place = strdup( "" );
+}
+| var COMMA var_list {
+    if(DEBUG_OUTPUT) printf( "var_list -> var COMMA var_list\n" ); 
+    string t;
+    if( $1.arr ){
+        t.append( ".[]| ");
+    }
+    else {
+        t.append( ".| " );
+    }
+    t.append( $1.place ).append( "\n" ).append( $3.code );
+
+    $$.code = strdup( t.c_str() );
+    $$.place = strdup( "" );
+}
+;
+expression: mult {
+    if( DEBUG_OUTPUT ) printf( "expression -> mult\n"); 
+    $$.code = strdup( $1.code );
+    $$.place = strdup( $1.place );
+}
+| mult SUB expression {
+    if(DEBUG_OUTPUT) printf( "expression -> mult SUB expression\n");
+    string t;
+    string dest = tem();
+
+    t.append( $1.code ).append( $3.code );
+    t.append( ". " + dst + "\n" );
+    t.append( "- " + dst + ", " ).append( $1.place ).append( ", " ).append( $3.place ).append( "\n");
+
+    $$.code = strdup( t.c_str() );
+    $$.place = strdup( dst.c_str() );
+}
+| mult PLUS expression {
+    if( DEBUG_OUTPUT) printf( "expression -> mult PLUS expression\n");
+    string t;
+    string dest = tem();
+
+    t.append( $1.code ).append( $3.code );
+    t.append( ". " + dst + "\n" );
+    t.append( "+ " + dst + ", " ).append( $1.place ).append( ", " ).append( $3.place ).append( "\n");
+
+    $$.code = strdup( t.c_str() );
+    $$.place = strdup( dst.c_str() );
+}
+;
+
+term: x {printf("term -> x\n");} | number {printf("term -> number\n");} | L_PAREN expression R_PAREN {printf("term -> L_PAREN expression R_PAREN\n");} | id L_PAREN expression exp_loop R_PAREN {printf("term -> id L_PAREN expression exp_loop R_PAREN\n");} 
+
+number: NUMBER {printf("number -> NUMBER %d\n", $1); }
+exp_loop: COMMA expression exp_loop {printf("exp_loop -> COMMA expression exp_loop\n");} | %empty {printf("exp_loop -> epsilon\n");}
 
 st_write: WRITE x  {printf("st_write -> WRITE x SEMICOLON\n");}
 
@@ -105,37 +300,59 @@ st_while: WHILE bool_exp BEGIN_LOOP statements END_LOOP {printf("st_while -> WHI
 
 st_if: IF bool_exp THEN statements ENDIF {printf("st_if -> IF bool_exp THEN statements ENDIF\n");} 
 
-st_do: DO BEGIN_LOOP statements END_LOOP {printf("st_do -> DO BEGIN_LOOP statements END_LOOP\n");} 
+mult: term {
+    if(DEBUG_OUTPUT) printf( "mult -> term\n"); 
+    $$.code = strdup( $1.code );
+    $$.place = strdup( $$.place );
+}
+}
+| term MOD mult  {
+    if( DEBUG_OUTPUT ) printf( "mult -> term MOD mult\n");
+    string t;
+    string dest = tem();
 
-st_for: FOR x ASSIGN number SEMICOLON bool_exp SEMICOLON x ASSIGN expression BEGIN_LOOP statements END_LOOP {printf("st_for -> FOR x ASSIGN number  SEMICOLON bool_exp SEMICOLON x ASSIGN expression BEGIN_LOOP statements END_LOOP\n");}
+    t.append( $1.code ).append( $3.code );
+    t.append( ". " + dst + "\n" );
+    t.append( "% " + dst + ", " ).append( $1.place ).append( ", " ).append( $3.place ).append( "\n");
 
+    $$.code = strdup( t.c_str() );
+    $$.place = strdup( dst.c_str() );
+}
+| term MULT mult {
+    if( DEBUG_OUTPUT) printf( "mult -> term MULT mult\n"); 
+    string t;
+    string dest = tem();
 
-bool_exp: relation_exps {printf("bool_exp -> relation_exps\n");} |  bool_exp OR relation_exps {printf("bool_exp -> bool_exp OR relation_exps\n");}
+    t.append( $1.code ).append( $3.code );
+    t.append( ". " + dst + "\n" );
+    t.append( "* " + dst + ", " ).append( $1.place ).append( ", " ).append( $3.place ).append( "\n");
 
-relation_exps: relation_exp {printf("relation_exps -> relation_exp\n");} | relation_exps AND relation_exp {printf("relation_exps -> relation_exps AND relation_exp\n");}
+    $$.code = strdup( t.c_str() );
+    $$.place = strdup( dst.c_str() );
+}
+;
 
-relation_exp: NOT exp_comp {printf("relation_exp -> NOT exp_comp\n");} | exp_comp  {printf("relation_exp -> exp_comp\n");} | TRUE  {printf("relation_exp -> TRUE\n");} | FALSE  {printf("relation_exp -> FALSE\n");} | L_PAREN bool_exp R_PAREN  {printf("relation_exp -> L_PAREN bool_exp R_PAREN\n");}
+term: var { printf( "term -> var\n" ); }
+| SUB var {
+    if(DEBUG_OUTPUT) printf( "term -> SUB var\n" ); 
+    string dst = tem();
+    string t;
 
-exp_comp: expression comp expression {printf("exp_comp -> expression comp expression\n");} 
+    string dst = tem();
+    //. __temp__11
+    //call fibonacci, __temp__11
+    t.append( $3.code );
+    t.append( ". " + dst + "\n" )
+    t.append( "call " ).append($1.place ).append( ", " + dst + "\n" );
 
-comp: EQ {printf("comp -> EQ\n");} | NEQ {printf("comp -> NEQ\n");} | GT {printf("comp -> GT\n");} | LTE {printf("comp -> LTE\n");} | GTE {printf("comp -> GTE\n");}
+    $$.code = strdup( t.c_str );
+}
+| ident L_PAREN  R_PAREN { printf( "term -> ident L_PAREN R_PAREN\n" ); }
+;
 
-st_var: x ASSIGN expression {printf("st_var -> x ASSIGN expression\n");} 
-
-x: id {printf("x -> id\n");} | id L_SQUARE_BRACKET expression R_SQUARE_BRACKET {printf("x -> id L_SQUARE_BRACKET expression R_SQUARE_BRACKET\n");} | id L_SQUARE_BRACKET expression R_SQUARE_BRACKET L_SQUARE_BRACKET expression R_SQUARE_BRACKET {printf("x -> id L_SQUARE_BRACKET expression R_SQUARE_BRACKET L_SQUARE_BRACKET expression R_SQUARE_BRACKET\n");}
-
-expression: multiplicative_exp add_sub_exp {printf("expression -> multiplicative_exp add_sub_exp\n");}
-
-multiplicative_exp: term {printf("multiplicative_exp -> term\n");} | term MULT multiplicative_exp {printf("multiplicative_exp -> term MULT multiplicative_exp\n");} | term DIV multiplicative_exp {printf("multiplicative_exp -> term DIV multiplicative_exp\n");} | term MOD multiplicative_exp {printf("multiplicative_exp -> term MOD multiplicative_exp\n");}
-
-add_sub_exp: ADD expression {printf("add_sub_exp -> ADD expression\n");} | SUB expression {printf("add_sub_exp -> SUB expression\n");} |  %empty {printf("add_sub_exp -> epsilon\n");}
-
-term: x {printf("term -> x\n");} | number {printf("term -> number\n");} | L_PAREN expression R_PAREN {printf("term -> L_PAREN expression R_PAREN\n");} | id L_PAREN expression exp_loop R_PAREN {printf("term -> id L_PAREN expression exp_loop R_PAREN\n");} 
-
-number: NUMBER {printf("number -> NUMBER %d\n", $1); }
-exp_loop: COMMA expression exp_loop {printf("exp_loop -> COMMA expression exp_loop\n");} | %empty {printf("exp_loop -> epsilon\n");}
-
-
+exp: expression { printf( "exp -> expression\n"); }
+    | expression COMMA exp { printf( "expression COMMA exp\n"); }
+;
 %%
 int yyerror (const char* s) {
     extern int line;
