@@ -472,7 +472,7 @@ term: var { printf( "term -> var\n" ); }
     t.append( "* ").append($$.place ).append( ", -1\n");
 
     $$.code = strdup( t.c_str() );
-    $$.place = strdup( $3.place );
+    $$.place = strdup( $2.place );
     $$.arr = false;
 }
 | NUMBER {
@@ -482,7 +482,7 @@ term: var { printf( "term -> var\n" ); }
 }
 | SUB NUMBER {
     if(DEBUG_OUTPUT) printf( "term -> SUB NUMBER\n" ); 
-    string s = "-" + std::to_string( $1 );
+    string s = "-" + std::to_string( $3 );
     $$.code = strdup( "" );
     $$.place = strdup( s.c_str() );
 }
