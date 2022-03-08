@@ -45,57 +45,55 @@ extern int yydebug;
 # define YYTOKENTYPE
   enum yytokentype
   {
-    NUMBER = 258,
-    IDENT = 259,
-    FUNCTION = 260,
-    BEGIN_PARAMS = 261,
-    END_PARAMS = 262,
-    BEGIN_LOCALS = 263,
-    END_LOCALS = 264,
-    BEGIN_BODY = 265,
-    END_BODY = 266,
-    INTEGER = 267,
-    ARRAY = 268,
-    OF = 269,
-    IF = 270,
-    THEN = 271,
-    ENDIF = 272,
-    ELSE = 273,
-    WHILE = 274,
-    DO = 275,
-    IN = 276,
-    BEGIN_LOOP = 277,
-    END_LOOP = 278,
-    BREAK = 279,
-    CONTINUE = 280,
-    READ = 281,
-    WRITE = 282,
-    TRUE = 283,
-    FALSE = 284,
-    RETURN = 285,
-    FOR = 286,
-    AND = 287,
-    OR = 288,
-    NOT = 289,
-    SUB = 290,
-    ADD = 291,
-    MULT = 292,
-    DIV = 293,
-    MOD = 294,
-    EQ = 295,
-    NEQ = 296,
-    LT = 297,
-    GT = 298,
-    LTE = 299,
-    GTE = 300,
-    SEMICOLON = 301,
-    COLON = 302,
-    COMMA = 303,
-    L_PAREN = 304,
-    R_PAREN = 305,
-    L_SQUARE_BRACKET = 306,
-    R_SQUARE_BRACKET = 307,
-    ASSIGN = 308
+    FUNCTION = 258,
+    BEGIN_PARAMS = 259,
+    END_PARAMS = 260,
+    BEGIN_LOCALS = 261,
+    END_LOCALS = 262,
+    INTEGER = 263,
+    ARRAY = 264,
+    ENUM = 265,
+    OF = 266,
+    IF = 267,
+    THEN = 268,
+    ENDIF = 269,
+    ELSE = 270,
+    WHILE = 271,
+    DO = 272,
+    BEGINLOOP = 273,
+    ENDLOOP = 274,
+    CONTINUE = 275,
+    READ = 276,
+    WRITE = 277,
+    AND = 278,
+    OR = 279,
+    NOT = 280,
+    TRUE = 281,
+    FALSE = 282,
+    RETURN = 283,
+    BEGINBODY = 284,
+    ENDBODY = 285,
+    SUB = 286,
+    PLUS = 287,
+    MULT = 288,
+    DIV = 289,
+    MOD = 290,
+    EQ = 291,
+    NEQ = 292,
+    LT = 293,
+    GT = 294,
+    LTE = 295,
+    GTE = 296,
+    SEMICOLON = 297,
+    COLON = 298,
+    COMMA = 299,
+    L_PAREN = 300,
+    R_PAREN = 301,
+    L_SQUARE_BRACKET = 302,
+    R_SQUARE_BRACKET = 303,
+    ASSIGN = 304,
+    IDENT = 305,
+    NUMBER = 306
   };
 #endif
 
@@ -104,12 +102,20 @@ extern int yydebug;
 
 union YYSTYPE
 {
-#line 11 "miniL.y" /* yacc.c:1909  */
+#line 28 "miniL.y" /* yacc.c:1909  */
 
-    char* id;
-    int num;
+    int ival;
+    char* sval;
+    struct S {
+        char* code;
+    } statement;
+    struct E {
+        char* place;
+        char* code;
+        bool isArr;
+    } expression;
 
-#line 113 "y.tab.h" /* yacc.c:1909  */
+#line 119 "y.tab.h" /* yacc.c:1909  */
 };
 
 typedef union YYSTYPE YYSTYPE;
