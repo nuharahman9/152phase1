@@ -482,7 +482,7 @@ term: var { printf( "term -> var\n" ); }
 }
 | SUB NUMBER {
     if(DEBUG_OUTPUT) printf( "term -> SUB NUMBER\n" ); 
-    string s = "-" + std::to_string( $3 );
+    string s = "-" + std::to_string( $2 );
     $$.code = strdup( "" );
     $$.place = strdup( s.c_str() );
 }
